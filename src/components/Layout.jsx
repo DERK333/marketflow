@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import NavSearch from '@/components/NavSearch';
 
 export default function Layout() {
   const location = useLocation();
@@ -58,17 +59,9 @@ export default function Layout() {
           </Link>
 
           {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-xl hidden md:flex">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search listings..."
-                className="pl-9 bg-muted border-border focus:border-primary/50 rounded-xl"
-              />
-            </div>
-          </form>
+          <div className="flex-1 max-w-xl hidden md:block">
+            <NavSearch />
+          </div>
 
           {/* Actions */}
           <div className="flex items-center gap-2 ml-auto">
@@ -159,13 +152,7 @@ export default function Layout() {
         {/* Mobile Menu */}
         {mobileOpen && (
           <div className="md:hidden border-t border-border bg-card px-4 py-3 space-y-3">
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search..." className="pl-9 bg-muted" />
-              </div>
-              <Button type="submit" size="icon" variant="outline"><Search className="w-4 h-4" /></Button>
-            </form>
+            <NavSearch />
             <div className="flex gap-2">
               <Button className="flex-1 bg-primary text-primary-foreground" onClick={() => { navigate('/create-listing'); setMobileOpen(false); }}>
                 <PlusCircle className="w-4 h-4 mr-2" /> Sell Now
