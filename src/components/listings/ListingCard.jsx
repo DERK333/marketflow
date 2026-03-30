@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Package, Star, Heart, Eye } from 'lucide-react';
+import { MapPin, Package, Heart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const CONDITION_LABELS = {
@@ -10,9 +10,15 @@ const CONDITION_LABELS = {
   poor: { label: 'Poor', color: 'bg-destructive/20 text-destructive border-destructive/30' },
 };
 
-export default function ListingCard({ listing }) {
+export default function ListingCard({ listing, isFavorited = false, onToggleFavorite }) {
   const cond = CONDITION_LABELS[listing.condition] || CONDITION_LABELS.good;
   const hasImage = listing.images && listing.images.length > 0;
+
+  const handleFavorite = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleFavorite?.();
+  };
 
   return (
     <Link to={`/listing/${listing.id}`} className="group block">
@@ -34,10 +40,21 @@ export default function ListingCard({ listing }) {
             <Badge className={`text-xs border ${cond.color}`}>{cond.label}</Badge>
           </div>
           {listing.auction_enabled && (
-            <div className="absolute top-2 right-2">
+            <div className="absolute top-2 right-8">
               <Badge className="bg-accent/20 text-accent border-accent/30 text-xs">Auction</Badge>
             </div>
           )}
+
+          {/* Heart button */}
+          {onToggleFavorite && (
+            <button
+              onClick={handleFavorite}
+              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-colors"
+            >
+              <Heart className={`w-3.5 h-3.5 transition-colors ${isFavorited ? 'fill-red-500 text-red-500' : 'text-white'}`} />
+            </button>
+          )}
+
           {listing.delivery_type === 'local_pickup' && (
             <div className="absolute bottom-2 right-2">
               <Badge className="bg-black/60 text-white border-0 text-xs backdrop-blur-sm">

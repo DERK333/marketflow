@@ -2,9 +2,9 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { 
-  Search, Bell, MessageSquare, PlusCircle, User, 
+  MessageSquare, PlusCircle, User, 
   ShoppingBag, ChevronDown, LogOut, Settings, Shield,
-  Menu, X, Home, Tag, Package
+  Menu, X, Home, Tag, Package, Heart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -126,6 +126,9 @@ export default function Layout() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/orders')}>
                       <Package className="w-4 h-4 mr-2" /> Orders
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/favorites')}>
+                      <Heart className="w-4 h-4 mr-2" /> My Favorites
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/verification')}>
                       <Shield className="w-4 h-4 mr-2" /> Verification

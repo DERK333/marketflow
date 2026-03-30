@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Search, ArrowRight, Shield, Zap, Star, TrendingUp, MapPin, Package } from 'lucide-react';
+import { Search, ArrowRight, Shield, Zap, Star, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import ListingCard from '@/components/listings/ListingCard';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const CATEGORIES = [
   { label: 'Electronics', value: 'electronics', icon: '💻' },
@@ -28,6 +29,10 @@ export default function Home() {
   const [featured, setFeatured] = useState([]);
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const { favoriteMap, toggle } = useFavorites(user);
+
+  useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
 
   useEffect(() => {
     Promise.all([
@@ -141,7 +146,11 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {featured.map(listing => <ListingCard key={listing.id} listing={listing} />)}
+            {featured.map(listing => (
+              <ListingCard key={listing.id} listing={listing}
+                isFavorited={!!favoriteMap[listing.id]}
+                onToggleFavorite={() => toggle(listing.id)} />
+            ))}
           </div>
         )}
       </section>
@@ -162,7 +171,11 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {recent.map(listing => <ListingCard key={listing.id} listing={listing} />)}
+            {recent.map(listing => (
+              <ListingCard key={listing.id} listing={listing}
+                isFavorited={!!favoriteMap[listing.id]}
+                onToggleFavorite={() => toggle(listing.id)} />
+            ))}
           </div>
         )}
       </section>

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import ListingCard from '@/components/listings/ListingCard';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const CATEGORIES = [
   { label: 'All', value: '' },
@@ -46,7 +47,11 @@ export default function Browse() {
   const [minPrice, setMinPrice] = useState(Number(urlParams.get('minPrice')) || 0);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const { favoriteMap, toggle } = useFavorites(user);
+
+  useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -247,7 +252,14 @@ export default function Browse() {
             <div>
               <p className="text-sm text-muted-foreground mb-4">{listings.length} results</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {listings.map(listing => <ListingCard key={listing.id} listing={listing} />)}
+                {listings.map(listing => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    isFavorited={!!favoriteMap[listing.id]}
+                    onToggleFavorite={() => toggle(listing.id)}
+                  />
+                ))}
               </div>
             </div>
           )}
