@@ -29,9 +29,20 @@ export default function Layout() {
 
   useEffect(() => {
     if (!user) return;
+    // Initial count
     base44.entities.Message.filter({ recipient_id: user.id, read: false })
       .then(msgs => setUnreadMessages(msgs.length))
       .catch(() => {});
+    // Real-time subscription for new messages
+    const unsub = base44.entities.Message.subscribe((event) => {
+      if (event.type === 'create' && event.data?.recipient_id === user.id && !event.data?.read) {
+        setUnreadMessages(prev => prev + 1);
+      }
+      if (event.type === 'update' && event.data?.recipient_id === user.id && event.data?.read) {
+        setUnreadMessages(prev => Math.max(0, prev - 1));
+      }
+    });
+    return () => unsub();
   }, [user]);
 
   const handleSearch = (e) => {
