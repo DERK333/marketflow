@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Star, Shield, CheckCircle, Package, MapPin, Calendar, Edit2 } from 'lucide-react';
+import { Shield, CheckCircle, Package, MapPin, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ListingCard from '@/components/listings/ListingCard';
-import { format } from 'date-fns';
+import StarRating from '@/components/reviews/StarRating';
+import RatingSummary from '@/components/reviews/RatingSummary';
+import ReviewCard from '@/components/reviews/ReviewCard';
 
 export default function Profile() {
   const { id: profileId } = useParams();
@@ -79,9 +81,9 @@ export default function Profile() {
               <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{profile.location}</span>
             )}
             {avgRating !== null && (
-              <span className="flex items-center gap-1">
-                <Star className="w-3.5 h-3.5 fill-primary text-primary" />
-                {avgRating.toFixed(1)} ({reviews.length} reviews)
+              <span className="flex items-center gap-1.5">
+                <StarRating rating={Math.round(avgRating)} size="sm" />
+                <span>{avgRating.toFixed(1)} ({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
               </span>
             )}
             <span className="flex items-center gap-1">
@@ -131,25 +133,13 @@ export default function Profile() {
           {reviews.length === 0 ? (
             <p className="text-muted-foreground text-center py-12">No reviews yet.</p>
           ) : (
-            <div className="space-y-4">
-              {reviews.map(review => (
-                <div key={review.id} className="p-4 rounded-xl bg-card border border-border">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-1 mb-1">
-                        {Array(5).fill(0).map((_, i) => (
-                          <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-primary text-primary' : 'text-muted-foreground/30'}`} />
-                        ))}
-                      </div>
-                      <p className="text-sm text-foreground">{review.comment}</p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        By {review.reviewer_name} · {format(new Date(review.created_date), 'MMM d, yyyy')}
-                      </p>
-                    </div>
-                    <Badge className="bg-secondary text-muted-foreground border-border text-xs capitalize shrink-0">{review.role}</Badge>
-                  </div>
-                </div>
-              ))}
+            <div className="space-y-6">
+              <div className="p-5 rounded-2xl bg-card border border-border">
+                <RatingSummary reviews={reviews} />
+              </div>
+              <div className="space-y-3">
+                {reviews.map(review => <ReviewCard key={review.id} review={review} />)}
+              </div>
             </div>
           )}
         </TabsContent>

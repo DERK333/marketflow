@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Package, ShoppingBag, Truck, CheckCircle, Clock, AlertCircle, Star } from 'lucide-react';
+import { Package, ShoppingBag, Truck, CheckCircle, Clock, AlertCircle, Star, CheckCheck } from 'lucide-react';
+import StarRating from '@/components/reviews/StarRating';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,6 +32,7 @@ export default function Orders() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewingTx, setReviewingTx] = useState(null);
+  const [reviewedTxIds, setReviewedTxIds] = useState(new Set());
 
   useEffect(() => {
     base44.auth.me().then(async u => {
@@ -43,6 +45,9 @@ export default function Orders() {
       setPurchases(buys);
       setSales(sells);
       setOffers(ofrs);
+      // Check which transactions already have reviews
+      const myReviews = await base44.entities.Review.filter({ reviewer_id: u.id }, '-created_date', 100);
+      setReviewedTxIds(new Set(myReviews.map(r => r.transaction_id)));
     }).catch(() => base44.auth.redirectToLogin())
       .finally(() => setLoading(false));
   }, []);
@@ -72,6 +77,7 @@ export default function Orders() {
       role: 'buyer',
     });
     toast.success('Review submitted!');
+    setReviewedTxIds(prev => new Set([...prev, reviewingTx.id]));
     setReviewingTx(null);
     setReviewComment('');
     setReviewRating(5);
@@ -102,7 +108,12 @@ export default function Orders() {
               Confirm Receipt
             </Button>
           )}
-          {isBuyer && tx.status === 'completed' && (
+          {isBuyer && tx.status === 'completed' && reviewedTxIds.has(tx.id) && (
+            <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs gap-1 h-7 px-2">
+              <CheckCheck className="w-3 h-3" /> Reviewed
+            </Badge>
+          )}
+          {isBuyer && tx.status === 'completed' && !reviewedTxIds.has(tx.id) && (
             <Dialog onOpenChange={(o) => { if (!o) { setReviewingTx(null); setReviewComment(''); setReviewRating(5); } }}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline" className="border-border rounded-lg h-7 text-xs" onClick={() => setReviewingTx(tx)}>
@@ -114,12 +125,9 @@ export default function Orders() {
                   <DialogTitle className="text-foreground">Leave a Review</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 mt-2">
-                  <div className="flex gap-1">
-                    {[1,2,3,4,5].map(n => (
-                      <button key={n} onClick={() => setReviewRating(n)}>
-                        <Star className={`w-7 h-7 ${n <= reviewRating ? 'fill-primary text-primary' : 'text-muted-foreground/30'}`} />
-                      </button>
-                    ))}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Your rating</p>
+                    <StarRating rating={reviewRating} size="xl" interactive onRate={setReviewRating} />
                   </div>
                   <Textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)}
                     placeholder="Share your experience..." className="bg-secondary border-border resize-none" rows={3} />

@@ -1,14 +1,25 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Star, Shield } from 'lucide-react';
+import { CheckCircle, Shield } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { base44 } from '@/api/base44Client';
+import StarRating from '@/components/reviews/StarRating';
 
 export default function SellerCard({ seller, listingLocation }) {
   const navigate = useNavigate();
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    if (!seller?.id) return;
+    base44.entities.Review.filter({ reviewed_user_id: seller.id }, '-created_date', 50)
+      .then(setReviews).catch(() => {});
+  }, [seller?.id]);
+
   if (!seller) return null;
 
-  const avg = seller.rating ? seller.rating.toFixed(1) : null;
+  const avg = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : null;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
@@ -29,13 +40,13 @@ export default function SellerCard({ seller, listingLocation }) {
               </Badge>
             )}
           </div>
-          {avg && (
-            <div className="flex items-center gap-1 mt-1">
-              {Array(5).fill(0).map((_, i) => (
-                <Star key={i} className={`w-3.5 h-3.5 ${i < Math.round(Number(avg)) ? 'fill-primary text-primary' : 'text-muted-foreground/30'}`} />
-              ))}
-              <span className="text-sm text-muted-foreground ml-1">{avg} · {seller.total_reviews} reviews</span>
+          {avg !== null ? (
+            <div className="flex items-center gap-1.5 mt-1">
+              <StarRating rating={Math.round(avg)} size="sm" />
+              <span className="text-sm text-muted-foreground">{avg.toFixed(1)} · {reviews.length} review{reviews.length !== 1 ? 's' : ''}</span>
             </div>
+          ) : (
+            <p className="text-xs text-muted-foreground mt-1">No reviews yet</p>
           )}
           {seller.total_sales > 0 && (
             <p className="text-xs text-muted-foreground mt-0.5">{seller.total_sales} successful sales</p>
