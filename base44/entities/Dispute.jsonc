@@ -1,0 +1,73 @@
+{
+  "name": "Dispute",
+  "type": "object",
+  "properties": {
+    "transaction_id": {
+      "type": "string"
+    },
+    "listing_title": {
+      "type": "string"
+    },
+    "buyer_id": {
+      "type": "string"
+    },
+    "buyer_name": {
+      "type": "string"
+    },
+    "seller_id": {
+      "type": "string"
+    },
+    "seller_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "item_not_received",
+        "item_not_as_described",
+        "damaged_item",
+        "wrong_item",
+        "other"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "evidence_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "under_review",
+        "resolved_buyer",
+        "resolved_seller",
+        "closed"
+      ],
+      "default": "open"
+    },
+    "admin_notes": {
+      "type": "string"
+    },
+    "refund_amount": {
+      "type": "number"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "transaction_id",
+    "buyer_id",
+    "seller_id",
+    "reason"
+  ]
+}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Package, ShoppingBag, Truck, CheckCircle, Clock, AlertCircle, Star, CheckCheck } from 'lucide-react';
 import StarRating from '@/components/reviews/StarRating';
+import DisputeDialog from '@/components/orders/DisputeDialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -33,6 +34,10 @@ export default function Orders() {
   const [reviewComment, setReviewComment] = useState('');
   const [reviewingTx, setReviewingTx] = useState(null);
   const [reviewedTxIds, setReviewedTxIds] = useState(new Set());
+
+  const handleDisputed = (txId) => {
+    setPurchases(prev => prev.map(t => t.id === txId ? { ...t, status: 'disputed' } : t));
+  };
 
   useEffect(() => {
     base44.auth.me().then(async u => {
@@ -107,6 +112,9 @@ export default function Orders() {
             <Button size="sm" className="bg-primary text-primary-foreground rounded-lg h-7 text-xs" onClick={() => confirmDelivery(tx)}>
               Confirm Receipt
             </Button>
+          )}
+          {isBuyer && (tx.status === 'shipped' || tx.status === 'delivered' || tx.status === 'payment_held') && (
+            <DisputeDialog tx={tx} user={user} onDisputed={handleDisputed} />
           )}
           {isBuyer && tx.status === 'completed' && reviewedTxIds.has(tx.id) && (
             <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs gap-1 h-7 px-2">
