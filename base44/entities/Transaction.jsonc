@@ -1,0 +1,72 @@
+{
+  "name": "Transaction",
+  "type": "object",
+  "properties": {
+    "listing_id": {
+      "type": "string"
+    },
+    "listing_title": {
+      "type": "string"
+    },
+    "buyer_id": {
+      "type": "string"
+    },
+    "buyer_name": {
+      "type": "string"
+    },
+    "seller_id": {
+      "type": "string"
+    },
+    "seller_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "platform_fee": {
+      "type": "number"
+    },
+    "seller_payout": {
+      "type": "number"
+    },
+    "delivery_type": {
+      "type": "string",
+      "enum": [
+        "local_pickup",
+        "shipping"
+      ]
+    },
+    "shipping_address": {
+      "type": "string"
+    },
+    "tracking_number": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_payment",
+        "payment_held",
+        "shipped",
+        "delivered",
+        "completed",
+        "disputed",
+        "refunded",
+        "cancelled"
+      ],
+      "default": "pending_payment"
+    },
+    "offer_id": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "listing_id",
+    "buyer_id",
+    "seller_id",
+    "amount"
+  ]
+}

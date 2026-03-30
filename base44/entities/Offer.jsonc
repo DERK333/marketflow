@@ -1,0 +1,56 @@
+{
+  "name": "Offer",
+  "type": "object",
+  "properties": {
+    "listing_id": {
+      "type": "string"
+    },
+    "listing_title": {
+      "type": "string"
+    },
+    "buyer_id": {
+      "type": "string"
+    },
+    "buyer_name": {
+      "type": "string"
+    },
+    "seller_id": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "message": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined",
+        "countered",
+        "expired",
+        "withdrawn"
+      ],
+      "default": "pending"
+    },
+    "counter_amount": {
+      "type": "number"
+    },
+    "is_bid": {
+      "type": "boolean",
+      "default": false
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "listing_id",
+    "buyer_id",
+    "seller_id",
+    "amount"
+  ]
+}

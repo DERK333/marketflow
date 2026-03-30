@@ -1,0 +1,62 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "admin"
+      ],
+      "default": "user"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "unverified",
+        "pending",
+        "verified",
+        "rejected"
+      ],
+      "default": "unverified"
+    },
+    "account_type": {
+      "type": "string",
+      "enum": [
+        "individual",
+        "business"
+      ],
+      "default": "individual"
+    },
+    "business_name": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "number"
+    },
+    "total_reviews": {
+      "type": "number",
+      "default": 0
+    },
+    "total_sales": {
+      "type": "number",
+      "default": 0
+    },
+    "joined_date": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

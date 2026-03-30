@@ -1,0 +1,40 @@
+{
+  "name": "Review",
+  "type": "object",
+  "properties": {
+    "reviewer_id": {
+      "type": "string"
+    },
+    "reviewer_name": {
+      "type": "string"
+    },
+    "reviewed_user_id": {
+      "type": "string"
+    },
+    "listing_id": {
+      "type": "string"
+    },
+    "transaction_id": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "number"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "buyer",
+        "seller"
+      ]
+    }
+  },
+  "required": [
+    "reviewer_id",
+    "reviewed_user_id",
+    "rating",
+    "role"
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "name": "Listing",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "price": {
+      "type": "number"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "electronics",
+        "vehicles",
+        "clothing",
+        "home_garden",
+        "sports",
+        "toys",
+        "books",
+        "music",
+        "art",
+        "jewelry",
+        "collectibles",
+        "other"
+      ]
+    },
+    "condition": {
+      "type": "string",
+      "enum": [
+        "new",
+        "like_new",
+        "good",
+        "fair",
+        "poor"
+      ]
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "seller_id": {
+      "type": "string"
+    },
+    "seller_name": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "delivery_type": {
+      "type": "string",
+      "enum": [
+        "local_pickup",
+        "shipping",
+        "both"
+      ]
+    },
+    "shipping_cost": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "sold",
+        "pending",
+        "draft",
+        "removed"
+      ],
+      "default": "active"
+    },
+    "allows_offers": {
+      "type": "boolean",
+      "default": true
+    },
+    "auction_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "auction_end_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "starting_bid": {
+      "type": "number"
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "title",
+    "price",
+    "category",
+    "condition",
+    "delivery_type"
+  ]
+}
