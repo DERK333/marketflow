@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { 
   MessageSquare, PlusCircle, User, 
   ShoppingBag, ChevronDown, LogOut, Settings, Shield,
-  Menu, X, Home, Tag, Package, Heart
+  Menu, X, Home, Tag, Package, Heart, TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -129,6 +129,9 @@ export default function Layout() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/favorites')}>
                       <Heart className="w-4 h-4 mr-2" /> My Favorites
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/analytics')}>
+                      <TrendingUp className="w-4 h-4 mr-2" /> Analytics
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/verification')}>
                       <Shield className="w-4 h-4 mr-2" /> Verification

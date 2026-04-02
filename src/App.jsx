@@ -18,6 +18,7 @@ import Orders from '@/pages/Orders';
 import Checkout from '@/pages/Checkout';
 import AdminPanel from '@/pages/AdminPanel';
 import MyFavorites from '@/pages/MyFavorites';
+import Analytics from '@/pages/Analytics';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -54,6 +55,7 @@ const AuthenticatedApp = () => {
         <Route path="/checkout/:id" element={<Checkout />} />
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/favorites" element={<MyFavorites />} />
+        <Route path="/analytics" element={<Analytics />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
