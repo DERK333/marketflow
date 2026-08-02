@@ -58,5 +58,14 @@
       "type": "string",
       "format": "date"
     }
-  }
+  },
+  "required": [
+    "bio",
+    "avatar_url",
+    "location",
+    "phone",
+    "business_name",
+    "rating",
+    "joined_date"
+  ]
 }
