@@ -107,5 +107,35 @@
     "category",
     "condition",
     "delivery_type"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "data.seller_id": "{{user.id}}"
+    },
+    "read": null,
+    "update": {
+      "$or": [
+        {
+          "data.seller_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.seller_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
 }
