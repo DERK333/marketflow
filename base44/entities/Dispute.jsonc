@@ -69,5 +69,35 @@
     "buyer_id",
     "seller_id",
     "reason"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "data.buyer_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.buyer_id": "{{user.id}}"
+        },
+        {
+          "data.seller_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
