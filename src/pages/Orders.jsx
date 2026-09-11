@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Package, ShoppingBag, Truck, CheckCircle, Clock, AlertCircle, Star, CheckCheck } from 'lucide-react';
 import StarRating from '@/components/reviews/StarRating';
 import DisputeDialog from '@/components/orders/DisputeDialog';
+import CounterOfferDialog from '@/components/orders/CounterOfferDialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,6 +30,8 @@ export default function Orders() {
   const [purchases, setPurchases] = useState([]);
   const [sales, setSales] = useState([]);
   const [offers, setOffers] = useState([]);
+  const [counteredOffers, setCounteredOffers] = useState([]);
+  const [myOffers, setMyOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -42,14 +45,18 @@ export default function Orders() {
   useEffect(() => {
     base44.auth.me().then(async u => {
       setUser(u);
-      const [buys, sells, ofrs] = await Promise.all([
+      const [buys, sells, ofrs, cntrs, myOfs] = await Promise.all([
         base44.entities.Transaction.filter({ buyer_id: u.id }, '-created_date', 20),
         base44.entities.Transaction.filter({ seller_id: u.id }, '-created_date', 20),
         base44.entities.Offer.filter({ seller_id: u.id, status: 'pending' }, '-created_date', 20),
+        base44.entities.Offer.filter({ seller_id: u.id, status: 'countered' }, '-created_date', 20),
+        base44.entities.Offer.filter({ buyer_id: u.id }, '-created_date', 20),
       ]);
       setPurchases(buys);
       setSales(sells);
       setOffers(ofrs);
+      setCounteredOffers(cntrs);
+      setMyOffers(myOfs);
       // Check which transactions already have reviews
       const myReviews = await base44.entities.Review.filter({ reviewer_id: u.id }, '-created_date', 100);
       setReviewedTxIds(new Set(myReviews.map(r => r.transaction_id)));
@@ -67,6 +74,30 @@ export default function Orders() {
     await base44.entities.Offer.update(offer.id, { status: response });
     setOffers(prev => prev.filter(o => o.id !== offer.id));
     toast.success(`Offer ${response}`);
+  };
+
+  const handleCountered = (offerId) => {
+    setOffers(prev => prev.filter(o => o.id !== offerId));
+    base44.entities.Offer.filter({ seller_id: user.id, status: 'countered' }, '-created_date', 20)
+      .then(setCounteredOffers).catch(() => {});
+    // keep the buyer-side list in sync (same user may be buyer and seller)
+    base44.entities.Offer.filter({ buyer_id: user.id }, '-created_date', 20)
+      .then(setMyOffers).catch(() => {});
+  };
+
+  const acceptCounter = async (offer) => {
+    await base44.entities.Offer.update(offer.id, { status: 'accepted', amount: offer.counter_amount });
+    setMyOffers(prev => prev.map(o => o.id === offer.id
+      ? { ...o, status: 'accepted', amount: offer.counter_amount } : o));
+    setCounteredOffers(prev => prev.filter(o => o.id !== offer.id));
+    toast.success(`Counteroffer accepted at $${offer.counter_amount?.toLocaleString()}`);
+  };
+
+  const declineCounter = async (offer) => {
+    await base44.entities.Offer.update(offer.id, { status: 'declined' });
+    setMyOffers(prev => prev.map(o => o.id === offer.id ? { ...o, status: 'declined' } : o));
+    setCounteredOffers(prev => prev.filter(o => o.id !== offer.id));
+    toast('Counteroffer declined');
   };
 
   const submitReview = async () => {
@@ -182,24 +213,91 @@ export default function Orders() {
         </TabsContent>
 
         <TabsContent value="offers" className="space-y-3">
-          {offers.length === 0 ? <p className="text-muted-foreground text-center py-12">No pending offers.</p>
-            : offers.map(offer => (
-              <div key={offer.id} className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">{offer.listing_title}</p>
-                  <p className="text-xs text-muted-foreground mt-1">From {offer.buyer_name} · Offer: <span className="text-primary font-semibold">${offer.amount?.toLocaleString()}</span></p>
-                  {offer.message && <p className="text-xs text-muted-foreground mt-1 italic">"{offer.message}"</p>}
+          {offers.length === 0 && counteredOffers.length === 0 && myOffers.length === 0 ? (
+            <p className="text-muted-foreground text-center py-12">No offers yet.</p>
+          ) : (
+            <>
+              {offers.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold text-foreground">Received Offers</p>
+                  {offers.map(offer => (
+                    <div key={offer.id} className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border flex-wrap">
+                      <div className="flex-1 min-w-40">
+                        <p className="text-sm font-semibold text-foreground">{offer.listing_title}</p>
+                        <p className="text-xs text-muted-foreground mt-1">From {offer.buyer_name} · Offer: <span className="text-primary font-semibold">${offer.amount?.toLocaleString()}</span></p>
+                        {offer.message && <p className="text-xs text-muted-foreground mt-1 italic">"{offer.message}"</p>}
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button size="sm" className="bg-primary text-primary-foreground rounded-lg h-8 text-xs" onClick={() => handleOfferResponse(offer, 'accepted')}>
+                          Accept
+                        </Button>
+                        <CounterOfferDialog offer={offer} onCountered={handleCountered} />
+                        <Button size="sm" variant="outline" className="border-border rounded-lg h-8 text-xs" onClick={() => handleOfferResponse(offer, 'declined')}>
+                          Decline
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex gap-2 shrink-0">
-                  <Button size="sm" className="bg-primary text-primary-foreground rounded-lg h-8 text-xs" onClick={() => handleOfferResponse(offer, 'accepted')}>
-                    Accept
-                  </Button>
-                  <Button size="sm" variant="outline" className="border-border rounded-lg h-8 text-xs" onClick={() => handleOfferResponse(offer, 'declined')}>
-                    Decline
-                  </Button>
+              )}
+
+              {counteredOffers.length > 0 && (
+                <div className="space-y-3 pt-4">
+                  <p className="text-sm font-semibold text-foreground">Counteroffers Sent</p>
+                  {counteredOffers.map(offer => (
+                    <div key={offer.id} className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border flex-wrap">
+                      <div className="flex-1 min-w-40">
+                        <p className="text-sm font-semibold text-foreground">{offer.listing_title}</p>
+                        <p className="text-xs text-muted-foreground mt-1">From {offer.buyer_name} · Offer: ${offer.amount?.toLocaleString()} · <span className="text-primary font-semibold">You countered: ${offer.counter_amount?.toLocaleString()}</span></p>
+                      </div>
+                      <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs h-7 px-2 shrink-0">Awaiting buyer</Badge>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
+              )}
+
+              {myOffers.length > 0 && (
+                <div className="space-y-3 pt-4">
+                  <p className="text-sm font-semibold text-foreground">My Offers</p>
+                  {myOffers.map(offer => (
+                    <div key={offer.id} className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border flex-wrap">
+                      <div className="flex-1 min-w-40">
+                        <p className="text-sm font-semibold text-foreground">{offer.listing_title}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                          <span>Offered: <span className="text-primary font-semibold">${offer.amount?.toLocaleString()}</span></span>
+                          {offer.status === 'countered' && offer.counter_amount != null && (
+                            <span>Seller countered: <span className="text-primary font-semibold">${offer.counter_amount?.toLocaleString()}</span></span>
+                          )}
+                        </div>
+                        {offer.message && <p className="text-xs text-muted-foreground mt-1 italic">"{offer.message}"</p>}
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        {offer.status === 'pending' && (
+                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs h-7 px-2">Awaiting seller</Badge>
+                        )}
+                        {offer.status === 'countered' && (
+                          <>
+                            <Button size="sm" className="bg-primary text-primary-foreground rounded-lg h-8 text-xs" onClick={() => acceptCounter(offer)}>
+                              Accept ${offer.counter_amount?.toLocaleString()}
+                            </Button>
+                            <Button size="sm" variant="outline" className="border-border rounded-lg h-8 text-xs" onClick={() => declineCounter(offer)}>
+                              Decline
+                            </Button>
+                          </>
+                        )}
+                        {offer.status === 'accepted' && (
+                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs h-7 px-2">Accepted</Badge>
+                        )}
+                        {(offer.status === 'declined' || offer.status === 'expired' || offer.status === 'withdrawn') && (
+                          <Badge className="bg-secondary text-muted-foreground border-border text-xs h-7 px-2 capitalize">{offer.status}</Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>
