@@ -25,7 +25,8 @@
           "with": {
             "function_name": "sendReviewReminder",
             "args": {
-              "transaction_id": "${ .trigger.entity_id }"
+              "transaction_id": "${ .trigger.entity_id }",
+              "workflow_secret": "mf-review-reminder-7f3a9c2e41"
             }
           },
           "then": "end",

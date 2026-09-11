@@ -1,13 +1,25 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 
+// Shared secret passed only by the Review Reminder workflow — direct external
+// calls without it are rejected (the workflow runs without a logged-in user,
+// so a shared secret is the caller verification for this endpoint).
+const WORKFLOW_SECRET = 'mf-review-reminder-7f3a9c2e41';
+
+const escapeHtml = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const transactionId = body?.transaction_id;
-    if (!transactionId) {
-      return Response.json({ error: 'transaction_id is required' }, { status: 400 });
+    if (!body || body.workflow_secret !== WORKFLOW_SECRET || !body.transaction_id) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const transactionId = body.transaction_id;
 
     const service = base44.asServiceRole;
     const transactions = await service.entities.Transaction.filter({ id: transactionId });
@@ -23,9 +35,9 @@ export default async function(req) {
     const buyer = buyers[0];
     if (!buyer || !buyer.email) return Response.json({ sent: false, reason: 'buyer_email_unavailable' });
 
-    const firstName = (buyer.full_name || 'there').split(' ')[0];
-    const title = tx.listing_title || 'your recent purchase';
-    const sellerName = tx.seller_name || 'the seller';
+    const firstName = escapeHtml((buyer.full_name || 'there').split(' ')[0]);
+    const title = escapeHtml(tx.listing_title || 'your recent purchase');
+    const sellerName = escapeHtml(tx.seller_name || 'the seller');
 
     await service.integrations.Core.SendEmail({
       to: buyer.email,
@@ -44,7 +56,7 @@ export default async function(req) {
       `,
     });
 
-    return Response.json({ sent: true, to: buyer.email });
+    return Response.json({ sent: true });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
