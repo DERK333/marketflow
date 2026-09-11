@@ -22,7 +22,7 @@ export default async function(req) {
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: admin.email,
           subject: 'New verification request awaiting review',
-          body: `${vr.user_name} (${vr.user_email}) submitted a ${vr.account_type} verification request.\n\nReview the submitted documents in the Admin Panel: Verifications tab.`,
+          body: `${user.full_name} (${user.email}) submitted a verification request.\n\nReview the submitted documents in the Admin Panel: Verifications tab.`,
         });
       }
       return Response.json({ ok: true, notified: 'admins' });
@@ -32,13 +32,18 @@ export default async function(req) {
     if (vr.status === 'approved' || vr.status === 'rejected') {
       if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
       if (event_type === 'update') {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: vr.user_email,
-          subject: vr.status === 'approved' ? 'You are now ID Verified' : 'Verification request update',
-          body: vr.status === 'approved'
-            ? `Hi ${vr.user_name}, your verification was approved. Your listings and profile now show the ID Verified badge.`
-            : `Hi ${vr.user_name}, unfortunately your verification request was not approved. ${vr.admin_notes || 'Please re-submit with clearer documents.'}`,
-        });
+        // Never trust the client-supplied email/name on the request —
+        // resolve the real account owner from the User entity.
+        const owner = await base44.asServiceRole.entities.User.filter({ id: vr.user_id }).then(r => r[0] || null);
+        if (owner) {
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            to: owner.email,
+            subject: vr.status === 'approved' ? 'You are now ID Verified' : 'Verification request update',
+            body: vr.status === 'approved'
+              ? `Hi ${owner.full_name}, your verification was approved. Your listings and profile now show the ID Verified badge.`
+              : `Hi ${owner.full_name}, unfortunately your verification request was not approved. ${vr.admin_notes || 'Please re-submit with clearer documents.'}`,
+          });
+        }
       }
       return Response.json({ ok: true, notified: 'user' });
     }
