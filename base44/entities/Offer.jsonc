@@ -38,6 +38,9 @@
     "counter_amount": {
       "type": "number"
     },
+    "counter_message": {
+      "type": "string"
+    },
     "is_bid": {
       "type": "boolean",
       "default": false

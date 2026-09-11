@@ -269,6 +269,9 @@ export default function Orders() {
                             <span>Seller countered: <span className="text-primary font-semibold">${offer.counter_amount?.toLocaleString()}</span></span>
                           )}
                         </div>
+                        {offer.status === 'countered' && offer.counter_message && (
+                          <p className="text-xs text-muted-foreground mt-1 italic">Seller: "{offer.counter_message}"</p>
+                        )}
                         {offer.message && <p className="text-xs text-muted-foreground mt-1 italic">"{offer.message}"</p>}
                       </div>
                       <div className="flex gap-2 shrink-0">

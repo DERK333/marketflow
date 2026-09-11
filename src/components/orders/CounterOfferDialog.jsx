@@ -3,12 +3,14 @@ import { base44 } from '@/api/base44Client';
 import { ArrowLeftRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
 export default function CounterOfferDialog({ offer, onCountered }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState('');
+  const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -22,10 +24,12 @@ export default function CounterOfferDialog({ offer, onCountered }) {
       await base44.entities.Offer.update(offer.id, {
         status: 'countered',
         counter_amount: value,
+        counter_message: message.trim() || null,
       });
       toast.success(`Counteroffer of $${value.toLocaleString()} sent to ${offer.buyer_name}`);
       setOpen(false);
       setAmount('');
+      setMessage('');
       onCountered(offer.id);
     } finally {
       setSubmitting(false);
@@ -54,6 +58,13 @@ export default function CounterOfferDialog({ offer, onCountered }) {
             <Input value={amount} onChange={e => setAmount(e.target.value)}
               type="number" className="bg-secondary border-border"
               placeholder="Enter an amount" />
+          </div>
+          <div>
+            <label className="text-sm text-muted-foreground mb-1.5 block">Message (optional)</label>
+            <Textarea value={message} onChange={e => setMessage(e.target.value)}
+              className="bg-secondary border-border resize-none"
+              placeholder="Explain your counteroffer price..."
+              rows={2} maxLength={300} />
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1 border-border" onClick={() => setOpen(false)}>Cancel</Button>
