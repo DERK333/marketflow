@@ -15,7 +15,7 @@
     "document": {
       "dsl": "1.0",
       "name": "review_reminder",
-      "version": "1.1",
+      "version": "1.2",
       "namespace": "base44"
     },
     "do": [
@@ -25,8 +25,7 @@
           "with": {
             "function_name": "sendReviewReminder",
             "args": {
-              "transaction_id": "${ .trigger.entity_id }",
-              "workflow_secret": "mfrw-a9d4e7f2b6c8315d"
+              "transaction_id": "${ .trigger.entity_id }"
             }
           },
           "then": "end",

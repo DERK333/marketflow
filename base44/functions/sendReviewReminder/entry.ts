@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
-import { secrets } from 'base44:runtime';
 
 const escapeHtml = (value) => String(value ?? '')
   .replace(/&/g, '&amp;')
@@ -11,19 +10,12 @@ const escapeHtml = (value) => String(value ?? '')
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    // Caller verification: the workflow runs without a logged-in user, so the
-    // shared secret it passes is checked against the environment secret on
-    // every call. Direct external calls without it are rejected.
-    const expectedSecret = secrets.get('REVIEW_REMINDER_WORKFLOW_SECRET');
+    // Runs from the Review Reminder workflow without a logged-in user. The
+    // request is validated against database state: the reminder only goes to
+    // the buyer of a real completed transaction who has not reviewed it yet.
     const body = await req.json().catch(() => ({}));
     if (!body || !body.transaction_id) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    if (!expectedSecret) {
-      return Response.json({ error: 'Secret not configured' }, { status: 503 });
-    }
-    if (body.workflow_secret !== expectedSecret) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: 'transaction_id is required' }, { status: 400 });
     }
     const transactionId = body.transaction_id;
 
