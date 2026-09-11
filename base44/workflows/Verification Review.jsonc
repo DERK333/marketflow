@@ -1,0 +1,42 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "verification_review",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "handle_verification_event": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "processVerificationEvent",
+            "args": {
+              "request_id": "${ .trigger.entity_id }",
+              "event_type": "${ .trigger.event_type }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send review notifications",
+            "description": "Alerts admins or the requester"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create",
+        "update"
+      ],
+      "entity_name": "VerificationRequest"
+    }
+  },
+  "description": "Notifies admins when new identity/business documents are submitted for review, and emails the user when their verification is approved or rejected",
+  "name": "Verification Review"
+}

@@ -45,7 +45,8 @@ export default function AdminPanel() {
       .finally(() => setLoading(false));
   }, []);
 
-  const reviewVerification = async (vr, status, note = '') => {
+  const reviewVerification = async (vr, status) => {
+    const note = adminNotes[vr.id] || '';
     await base44.entities.VerificationRequest.update(vr.id, {
       status,
       admin_notes: note || undefined,
@@ -54,7 +55,8 @@ export default function AdminPanel() {
     // Update user verification_status
     const users = await base44.entities.User.filter({ id: vr.user_id });
     if (users[0]) await base44.entities.User.update(users[0].id, { verification_status: status === 'approved' ? 'verified' : 'rejected' });
-    setVerifications(prev => prev.map(v => v.id === vr.id ? { ...v, status } : v));
+    setVerifications(prev => prev.map(v => v.id === vr.id ? { ...v, status, admin_notes: note || v.admin_notes, reviewed_at: new Date().toISOString() } : v));
+    setStats(prev => ({ ...prev, pending: Math.max(0, prev.pending - (vr.status === 'pending' ? 1 : 0)) }));
     toast.success(`Verification ${status}`);
   };
 
@@ -133,7 +135,7 @@ export default function AdminPanel() {
         <TabsContent value="verifications" className="space-y-4">
           {verifications.length === 0 && <p className="text-muted-foreground text-center py-12">No verification requests.</p>}
           {verifications.map(vr => (
-            <div key={vr.id} className="p-4 rounded-xl bg-card border border-border">
+            <div key={vr.id} className="p-4 rounded-xl bg-card border border-border space-y-3">
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -147,7 +149,8 @@ export default function AdminPanel() {
                   </div>
                   <p className="text-sm text-muted-foreground">{vr.user_email}</p>
                   {vr.business_name && <p className="text-sm text-muted-foreground">Business: {vr.business_name}</p>}
-                  <p className="text-xs text-muted-foreground">{format(new Date(vr.created_date), 'MMM d, yyyy h:mm a')}</p>
+                  <p className="text-xs text-muted-foreground">Submitted {format(new Date(vr.created_date), 'MMM d, yyyy h:mm a')}</p>
+                  {vr.reviewed_at && <p className="text-xs text-muted-foreground">Reviewed {format(new Date(vr.reviewed_at), 'MMM d, yyyy h:mm a')}</p>}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {vr.id_document_url && (
@@ -157,20 +160,49 @@ export default function AdminPanel() {
                       </Button>
                     </a>
                   )}
-                  {vr.status === 'pending' && (
-                    <>
-                      <Button size="sm" className="bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30 rounded-lg h-8 text-xs"
-                        onClick={() => reviewVerification(vr, 'approved')}>
-                        <CheckCircle className="w-3 h-3 mr-1" /> Approve
+                  {vr.business_document_url && (
+                    <a href={vr.business_document_url} target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" size="sm" className="border-border rounded-lg h-8 text-xs">
+                        <Eye className="w-3 h-3 mr-1" /> View Business Doc
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg h-8 text-xs"
-                        onClick={() => reviewVerification(vr, 'rejected', 'Documents unclear')}>
-                        <XCircle className="w-3 h-3 mr-1" /> Reject
-                      </Button>
-                    </>
+                    </a>
+                  )}
+                  {vr.status !== 'pending' && (
+                    <Button size="sm" variant="outline"
+                      className={vr.status === 'approved'
+                        ? 'border-destructive/30 text-destructive hover:bg-destructive/10 rounded-lg h-8 text-xs'
+                        : 'border-green-500/30 text-green-400 hover:bg-green-500/10 rounded-lg h-8 text-xs'}
+                      onClick={() => reviewVerification(vr, vr.status === 'approved' ? 'rejected' : 'approved')}>
+                      {vr.status === 'approved'
+                        ? <XCircle className="w-3 h-3 mr-1" />
+                        : <CheckCircle className="w-3 h-3 mr-1" />} {vr.status === 'approved' ? 'Revoke' : 'Approve'}
+                    </Button>
                   )}
                 </div>
               </div>
+              {vr.status === 'pending' ? (
+                <div className="space-y-2 pt-3 border-t border-border">
+                  <Textarea
+                    value={adminNotes[vr.id] || ''}
+                    onChange={e => setAdminNotes(prev => ({ ...prev, [vr.id]: e.target.value }))}
+                    placeholder="Review notes (shared with the user if rejected)..."
+                    className="bg-secondary border-border resize-none text-sm"
+                    rows={2}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" className="bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30 rounded-lg h-8 text-xs"
+                      onClick={() => reviewVerification(vr, 'approved')}>
+                      <CheckCircle className="w-3 h-3 mr-1" /> Approve
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg h-8 text-xs"
+                      onClick={() => reviewVerification(vr, 'rejected')}>
+                      <XCircle className="w-3 h-3 mr-1" /> Reject
+                    </Button>
+                  </div>
+                </div>
+              ) : vr.admin_notes && (
+                <p className="text-xs text-muted-foreground pt-2 border-t border-border">Notes: {vr.admin_notes}</p>
+              )}
             </div>
           ))}
         </TabsContent>
