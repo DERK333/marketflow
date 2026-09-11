@@ -1,9 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
-
-// Shared secret passed only by the Review Reminder workflow — direct external
-// calls without it are rejected (the workflow runs without a logged-in user,
-// so a shared secret is the caller verification for this endpoint).
-const WORKFLOW_SECRET = 'mf-review-reminder-7f3a9c2e41';
+import { secrets } from 'base44:runtime';
 
 const escapeHtml = (value) => String(value ?? '')
   .replace(/&/g, '&amp;')
@@ -15,8 +11,18 @@ const escapeHtml = (value) => String(value ?? '')
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
+    // Caller verification: the workflow runs without a logged-in user, so the
+    // shared secret it passes is checked against the environment secret on
+    // every call. Direct external calls without it are rejected.
+    const expectedSecret = secrets.get('REVIEW_REMINDER_WORKFLOW_SECRET');
     const body = await req.json().catch(() => ({}));
-    if (!body || body.workflow_secret !== WORKFLOW_SECRET || !body.transaction_id) {
+    if (!body || !body.transaction_id) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!expectedSecret) {
+      return Response.json({ error: 'Secret not configured' }, { status: 503 });
+    }
+    if (body.workflow_secret !== expectedSecret) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const transactionId = body.transaction_id;
