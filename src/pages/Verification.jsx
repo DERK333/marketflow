@@ -66,6 +66,8 @@ export default function Verification() {
     await base44.auth.updateMe({ verification_status: 'pending', account_type: accountType, business_name: businessName || undefined });
     const reqs = await base44.entities.VerificationRequest.filter({ user_id: user.id }, '-created_date', 1);
     setExisting(reqs[0]);
+    // Notify admins about the new submission (fails silently: submission already succeeded)
+    await base44.functions.invoke('processVerificationEvent', { request_id: reqs[0]?.id, event_type: 'create' }).catch(() => null);
     toast.success('Verification request submitted!');
     setSubmitting(false);
   };

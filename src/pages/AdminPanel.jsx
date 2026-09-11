@@ -55,6 +55,8 @@ export default function AdminPanel() {
     // Update user verification_status
     const users = await base44.entities.User.filter({ id: vr.user_id });
     if (users[0]) await base44.entities.User.update(users[0].id, { verification_status: status === 'approved' ? 'verified' : 'rejected' });
+    // Email the requester about the decision (fails silently: decision is already saved)
+    await base44.functions.invoke('processVerificationEvent', { request_id: vr.id, event_type: 'update' }).catch(() => null);
     setVerifications(prev => prev.map(v => v.id === vr.id ? { ...v, status, admin_notes: note || v.admin_notes, reviewed_at: new Date().toISOString() } : v));
     setStats(prev => ({ ...prev, pending: Math.max(0, prev.pending - (vr.status === 'pending' ? 1 : 0)) }));
     toast.success(`Verification ${status}`);
