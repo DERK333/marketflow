@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Shield, Package, ShoppingBag, AlertTriangle, CheckCircle, XCircle, Eye, Image } from 'lucide-react';
+import { Shield, Package, ShoppingBag, AlertTriangle, CheckCircle, XCircle, Eye, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import ViewDocButton from '@/components/admin/ViewDocButton';
-import EvidenceGrid from '@/components/admin/EvidenceGrid';
+import DisputeCard from '@/components/admin/DisputeCard';
 
 export default function AdminPanel() {
   const navigate = useNavigate();
@@ -20,7 +19,6 @@ export default function AdminPanel() {
   const [disputes, setDisputes] = useState([]);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [partialAmounts, setPartialAmounts] = useState({});
   const [adminNotes, setAdminNotes] = useState({});
   const [stats, setStats] = useState({ users: 0, listings: 0, transactions: 0, pending: 0 });
 
@@ -68,22 +66,6 @@ export default function AdminPanel() {
     await base44.entities.Listing.update(id, { status: 'removed' });
     setListings(prev => prev.filter(l => l.id !== id));
     toast.success('Listing removed');
-  };
-
-  const resolveDispute = async (dispute, resolution, refundAmount = null) => {
-    const txStatus = resolution === 'resolved_buyer' ? 'refunded' : 'completed';
-    const note = adminNotes[dispute.id] || '';
-    await Promise.all([
-      base44.entities.Dispute.update(dispute.id, {
-        status: resolution,
-        admin_notes: note || undefined,
-        refund_amount: refundAmount || undefined,
-        resolved_at: new Date().toISOString(),
-      }),
-      base44.entities.Transaction.update(dispute.transaction_id, { status: txStatus, notes: note || undefined }),
-    ]);
-    setDisputes(prev => prev.map(d => d.id === dispute.id ? { ...d, status: resolution } : d));
-    toast.success(resolution === 'resolved_buyer' ? 'Refund issued to buyer' : 'Funds released to seller');
   };
 
   if (loading) return (
@@ -205,96 +187,21 @@ export default function AdminPanel() {
 
         {/* Disputes */}
         <TabsContent value="disputes" className="space-y-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-sm text-muted-foreground">All disputes, newest first.</p>
+            <Button size="sm" variant="outline" className="border-primary/30 text-primary hover:bg-primary/10 rounded-lg h-8 text-xs"
+              onClick={() => navigate('/admin/disputes')}>
+              <ExternalLink className="w-3 h-3 mr-1" /> Open Dispute Dashboard
+            </Button>
+          </div>
           {disputes.length === 0 && <p className="text-muted-foreground text-center py-12">No disputes filed.</p>}
-          {disputes.map(dispute => {
-            const isOpen = dispute.status === 'open' || dispute.status === 'under_review';
-            const REASON_LABELS = {
-              item_not_received: 'Item not received',
-              item_not_as_described: 'Not as described',
-              damaged_item: 'Damaged item',
-              wrong_item: 'Wrong item',
-              other: 'Other',
-            };
-            const STATUS_COLORS = {
-              open: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-              under_review: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-              resolved_buyer: 'bg-green-500/20 text-green-400 border-green-500/30',
-              resolved_seller: 'bg-primary/20 text-primary border-primary/30',
-              closed: 'bg-secondary text-muted-foreground border-border',
-            };
-            return (
-              <div key={dispute.id} className="p-5 rounded-xl bg-card border border-border space-y-4">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-foreground">{dispute.listing_title}</p>
-                      <Badge className={`border text-xs ${STATUS_COLORS[dispute.status]}`}>{dispute.status.replace('_', ' ')}</Badge>
-                      <Badge className="bg-destructive/10 text-destructive border-destructive/20 text-xs">{REASON_LABELS[dispute.reason]}</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Buyer: <span className="text-foreground">{dispute.buyer_name}</span> · Seller: <span className="text-foreground">{dispute.seller_name}</span></p>
-                    <p className="text-xs text-muted-foreground">{format(new Date(dispute.created_date), 'MMM d, yyyy h:mm a')}</p>
-                  </div>
-                  <p className="text-lg font-syne font-800 text-primary">${dispute.amount?.toLocaleString()}</p>
-                </div>
-
-                {/* Description */}
-                {dispute.description && (
-                  <div className="p-3 rounded-lg bg-secondary/50 text-sm text-foreground">
-                    <p className="text-xs text-muted-foreground mb-1 font-medium">Buyer's statement:</p>
-                    {dispute.description}
-                  </div>
-                )}
-
-                {/* Evidence */}
-                {dispute.evidence_urls?.length > 0 && (
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-                      <Image className="w-3.5 h-3.5" /> Evidence ({dispute.evidence_urls.length} photo{dispute.evidence_urls.length !== 1 ? 's' : ''})
-                    </p>
-                    <EvidenceGrid disputeId={dispute.id} evidenceUrls={dispute.evidence_urls} />
-                  </div>
-                )}
-
-                {/* Admin actions */}
-                {isOpen && (
-                  <div className="space-y-3 pt-2 border-t border-border">
-                    <Textarea
-                      value={adminNotes[dispute.id] || ''}
-                      onChange={e => setAdminNotes(prev => ({ ...prev, [dispute.id]: e.target.value }))}
-                      placeholder="Admin notes (visible on resolution)..."
-                      className="bg-secondary border-border resize-none text-sm"
-                      rows={2}
-                    />
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="flex items-center gap-2 flex-1 min-w-40">
-                        <span className="text-xs text-muted-foreground shrink-0">Partial refund $</span>
-                        <Input
-                          type="number" min="0" max={dispute.amount}
-                          value={partialAmounts[dispute.id] || ''}
-                          onChange={e => setPartialAmounts(prev => ({ ...prev, [dispute.id]: e.target.value }))}
-                          placeholder={`Max $${dispute.amount}`}
-                          className="bg-secondary border-border h-8 text-sm"
-                        />
-                        <Button size="sm" variant="outline" className="border-primary/30 text-primary hover:bg-primary/10 rounded-lg h-8 text-xs shrink-0"
-                          onClick={() => resolveDispute(dispute, 'resolved_buyer', Number(partialAmounts[dispute.id]))}>
-                          Issue Partial
-                        </Button>
-                      </div>
-                      <Button size="sm" className="bg-primary text-primary-foreground rounded-lg h-8 text-xs"
-                        onClick={() => resolveDispute(dispute, 'resolved_seller')}>
-                        Release to Seller
-                      </Button>
-                      <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 rounded-lg h-8 text-xs"
-                        onClick={() => resolveDispute(dispute, 'resolved_buyer', dispute.amount)}>
-                        Full Refund
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {disputes.map(dispute => (
+            <DisputeCard
+              key={dispute.id}
+              dispute={dispute}
+              onResolved={(resolution) => setDisputes(prev => prev.map(d => d.id === dispute.id ? { ...d, status: resolution } : d))}
+            />
+          ))}
         </TabsContent>
 
         {/* Listings */}

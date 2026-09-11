@@ -17,6 +17,7 @@ import MyListings from '@/pages/MyListings';
 import Orders from '@/pages/Orders';
 import Checkout from '@/pages/Checkout';
 import AdminPanel from '@/pages/AdminPanel';
+import DisputeDashboard from '@/pages/DisputeDashboard';
 import MyFavorites from '@/pages/MyFavorites';
 import Analytics from '@/pages/Analytics';
 
@@ -54,6 +55,7 @@ const AuthenticatedApp = () => {
         <Route path="/orders" element={<Orders />} />
         <Route path="/checkout/:id" element={<Checkout />} />
         <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/admin/disputes" element={<DisputeDashboard />} />
         <Route path="/favorites" element={<MyFavorites />} />
         <Route path="/analytics" element={<Analytics />} />
       </Route>
