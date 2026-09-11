@@ -9,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import ViewDocButton from '@/components/admin/ViewDocButton';
+import EvidenceGrid from '@/components/admin/EvidenceGrid';
 
 export default function AdminPanel() {
   const navigate = useNavigate();
@@ -156,18 +158,10 @@ export default function AdminPanel() {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {vr.id_document_url && (
-                    <a href={vr.id_document_url} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm" className="border-border rounded-lg h-8 text-xs">
-                        <Eye className="w-3 h-3 mr-1" /> View ID
-                      </Button>
-                    </a>
+                    <ViewDocButton recordType="verification" recordId={vr.id} fileUri={vr.id_document_url} label="View ID" />
                   )}
                   {vr.business_document_url && (
-                    <a href={vr.business_document_url} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm" className="border-border rounded-lg h-8 text-xs">
-                        <Eye className="w-3 h-3 mr-1" /> View Business Doc
-                      </Button>
-                    </a>
+                    <ViewDocButton recordType="verification" recordId={vr.id} fileUri={vr.business_document_url} label="View Business Doc" />
                   )}
                   {vr.status !== 'pending' && (
                     <Button size="sm" variant="outline"
@@ -258,14 +252,7 @@ export default function AdminPanel() {
                     <p className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
                       <Image className="w-3.5 h-3.5" /> Evidence ({dispute.evidence_urls.length} photo{dispute.evidence_urls.length !== 1 ? 's' : ''})
                     </p>
-                    <div className="flex gap-2 flex-wrap">
-                      {dispute.evidence_urls.map((url, i) => (
-                        <a key={i} href={url} target="_blank" rel="noopener noreferrer"
-                          className="w-20 h-20 rounded-lg overflow-hidden border border-border bg-secondary block hover:opacity-80 transition-opacity">
-                          <img src={url} alt={`Evidence ${i+1}`} className="w-full h-full object-cover" />
-                        </a>
-                      ))}
-                    </div>
+                    <EvidenceGrid disputeId={dispute.id} evidenceUrls={dispute.evidence_urls} />
                   </div>
                 )}
 

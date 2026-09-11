@@ -33,8 +33,10 @@ export default function Verification() {
     const file = e.target.files[0];
     if (!file) return;
     setIdUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setIdUrl(file_url);
+    // Private storage: ID documents must never be world-readable; admins view
+    // them through short-lived signed URLs issued by createSecureFileUrl.
+    const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
+    setIdUrl(file_uri);
     setIdUploading(false);
     toast.success('ID document uploaded');
   };
@@ -43,8 +45,8 @@ export default function Verification() {
     const file = e.target.files[0];
     if (!file) return;
     setBizUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setBizUrl(file_url);
+    const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
+    setBizUrl(file_uri);
     setBizUploading(false);
     toast.success('Business document uploaded');
   };

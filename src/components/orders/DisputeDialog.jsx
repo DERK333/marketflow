@@ -41,8 +41,10 @@ export default function DisputeDialog({ tx, user, onDisputed }) {
       let evidenceUrls = [];
       if (evidenceFiles.length > 0) {
         setUploading(true);
+        // Private storage: evidence photos must never be world-readable; they
+        // are viewed through short-lived signed URLs from createSecureFileUrl.
         evidenceUrls = await Promise.all(
-          evidenceFiles.map(file => base44.integrations.Core.UploadFile({ file }).then(r => r.file_url))
+          evidenceFiles.map(file => base44.integrations.Core.UploadPrivateFile({ file }).then(r => r.file_uri))
         );
         setUploading(false);
       }
